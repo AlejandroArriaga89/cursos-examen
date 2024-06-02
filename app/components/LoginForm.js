@@ -25,6 +25,7 @@ const LoginForm = () => {
 
         // Almacenar el token JWT en el localStorage
         localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", data.userId);
 
         // Realizar otras acciones después de iniciar sesión exitosamente, como redirigir a una página diferente
         console.log("Inicio de sesión exitoso");
