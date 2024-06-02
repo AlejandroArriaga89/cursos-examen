@@ -42,7 +42,7 @@ export default function NavBar({ token }) {
             </li>
 
             <li className="nav-item">
-              <Link href="/upload" className="nav-link">
+              <Link href="/cargar_materiales" className="nav-link">
                 Cargar Materiales
               </Link>
             </li>

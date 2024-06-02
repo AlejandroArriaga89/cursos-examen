@@ -6,29 +6,28 @@ const multer = require("multer");
 const path = require("path");
 const authenticateJWT = require("../../authMiddleware");
 const { NextResponse } = require("next/server");
-const { S3Client, Upload } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const s3Client = new S3Client({
   region: "us-east-1",
   credentials: {
-    accessKeyId: "ASIASBGPPQ6FMQNYXE74",
-    secretAccessKey: "PzP0wArms/DCWFt5N4FQYXHkkMoQJyjxNxRXxV2t",
+    accessKeyId: "ASIASBGPPQ6FKJBC57W3",
+    secretAccessKey: "PzP0wArms/CRft0fnxrDoN8GJ/yZCNq+naPRxPlHUnN6Msrxu7",
     sessionToken:
-      "IQoJb3JpZ2luX2VjEPD//////////wEaCXVzLXdlc3QtMiJIMEYCIQCvekoy+G4J/VyfizfizLjSq1GMBF8eHGuNUHD41+//xAIhAK56xrjg4OCv7xk19VqfX/1Eh2PH+AtRUQNJlnW7QPssKrICCHkQABoMMTQwMDIxNTY1MzIyIgwVIzD06KAzU2TrUtUqjwJJHWGJAk774gJYWIthEpIJcEhBMwVzELMytfvhm1xhcqJHSyUcH0kQ7DXk061iUQ99hH6V9LHLebFLLbDw7xdD3iucXYcMrz1P6arZU2oQiPOlIxVQzKaEMWmux0uC4jgYB9yxBreHjwBKRD1rUntpOlEcHIPwncyu5r7RoYPQQCRoRoBkWQTk8lxfs4n77ycdq3JpuJphZOvFyPMM5R9vgMvJF6m7F55ZgOVJ3cLYmH2pKthhAa23aCz89sfHYjwZ7Pg8BFhdihF1nQNNBW9BwVmmrmd34Qxs/3p2Xi0T8U2eB8xeNOU7dmMW2CN+uYKkBa8D449m1W5XQH2IlQFaAsOu++TL92nBJCYWDoOdMN2f8rIGOpwBBOr7a7XKxIj7sihN7ngPQI467xQI/q3wJXWdvgRdtjN6ZoIXBh0ZYKQr4adcIga9zCOQyiNkgzcbNn6Pk2yWv80f1zGNkgEV/M/Ll0xS81s+Ly5pHhUc1R5z9GP+qYmaZrR0V+tILiC3NRY83YgI4pWXAjnpIESv2YaROte5QoJCAhPF5N6pwEu5lOEYQH97QPWE56FIE/hZ+JT7",
+      "IQoJb3JpZ2luX2VjEPT//////////wEaCXVzLXdlc3QtMiJGMEQCIDA6lK+aio4H6gTFrCab1CCBCVdsEut9JryXFI3EC2zvAiAsFDTH+fy9LRAfXMoS6zWcQz5nrNkg2OE+Qij8a46kBCqyAgh9EAAaDDE0MDAyMTU2NTMyMiIMlrY6BTgtsOQbdtxNKo8C9gYi8peIYUvsVwTlr0ijiCrXgzRFZdR7+3RHPSU5AZJ+gkUUH8ZAyy4TmNMml+WVuEZ9tCmgfDz7vvKjL8Hos32lEQiw16p8Coszqf+2YxZp3EQ2EHKUb/jMpMcsjv5CvgErHGYuWKviwmIozKe0OopnST/Ho7EvWN6HQ1pw0v7PwkMR4YkHg4vBJZAcESy/w1JLLZotF8BxCxpHAZrTGjSbPvidNiZbqV8+kExHE1kwWUPx+S7iajCUzQNr0ZrfT/cj+JtpANHwyekJFb3RkspyFnigSnkDbf5LkAmygmSeCjRdrwwShAE/l9NPz7vgQ+aLDlmkIO/ObpCWwsedqvNE19sPbZWy7E1FC/plkDCbk/OyBjqeAdbxtmwx+UJ/IggsDDcmf823dPvDrFU7S/NNnfQw0T+VnTu7TeEP28tZOIlCjbmBIFZgj71iehWLJoXn9w9VpCC14M2Ao7kaQKEzPR9UTZtkHVAwCKVuxMNpTHceGCxQ0WL6WaHW+kmIfoVvpDnfNgsIux7AX4FMUyMJjKtPTwBvBX6NJc70rcvqIlVtb2p/VckJxzgp+rml0LbmcZTX",
   },
 });
 
-async function uploadFileToS3(file, fileName) {
-  const fileBuffer = file;
+async function uploadFileToS3(file, fileName, endpoint) {
   console.log(fileName);
 
   const params = {
     Bucket: "cursos-examen",
-    Key: `fotos/${fileName}-${Date.now}`,
-    Body: fileBuffer,
+    Key: `${endpoint}/${fileName}`,
+    Body: file,
     ContentType: "image/jpg",
   };
-  const command = new Upload(params);
+  const command = new PutObjectCommand(params);
   await s3Client.send(command);
   return fileName;
 }
@@ -47,7 +46,7 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage });
+const upload = multer();
 
 // Conexión a MongoDB
 mongoose
@@ -265,7 +264,7 @@ app.get("/participantes", async (req, res) => {
 });
 
 // Endpoint para crear un nuevo participante
-app.post("/participantes", async (req, res) => {
+app.post("/participantes", authenticateJWT, async (req, res) => {
   try {
     const nuevoParticipante = new Participante(req.body);
     await nuevoParticipante.save();
@@ -351,15 +350,30 @@ app.post("/register", upload.single("fotografia"), async (req, res) => {
     });
 
     // Si hay foto, la subimos a S3
-
-    console.log("Sí hay fotografía");
-    const fileName = `${nuevoId}-${Date.now()}.jpg`; // Nombre del archivo en S3
-    console.log(fileName);
-    typeFile = await uploadFileToS3(fotografia, fileName); // Subimos la foto a S3
-    console.log(typeFile);
+    if (fotografia) {
+      const fileName = `${nuevoId}.jpg`; // Nombre del archivo en S3
+      console.log(fileName);
+      typeFile = await uploadFileToS3(fotografia, fileName, "fotos"); // Subimos la foto a S3
+      console.log(typeFile);
+    }
 
     await nuevoParticipante.save();
     res.status(201).json(nuevoParticipante);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Endpoint para registro de material
+app.post("/upload", upload.single("archivo"), async (req, res) => {
+  try {
+    const archivo = req.file ? req.file.buffer : null;
+    console.log(archivo);
+    // Si hay foto, la subimos a S3
+
+    typeFile = await uploadFileToS3(archivo, fileName, "materiales"); // Subimos la foto a S3
+    console.log(typeFile);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

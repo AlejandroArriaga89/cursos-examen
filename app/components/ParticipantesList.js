@@ -50,6 +50,15 @@ const ParticipantesList = () => {
             <p>Email: {participante.email}</p>
             <p>Dirección: {participante.direccion}</p>
             <p>Teléfono: {participante.telefono}</p>
+            <img
+              src={
+                participante.foto
+                  ? `https://cursos-examen.s3.amazonaws.com/${participante.foto}.jpg`
+                  : "/assets/usuario.png"
+              }
+              alt="Foto de perfil"
+              style={{ width: 100, height: 100 }}
+            />
             <button
               className="btn btn-danger"
               onClick={() => handleDelete(participante._id)}
